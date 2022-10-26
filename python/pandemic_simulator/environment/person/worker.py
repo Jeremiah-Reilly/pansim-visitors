@@ -14,6 +14,7 @@ class Worker(BasePerson):
 
     _work: LocationID
     _work_time: SimTimeTuple
+    _is_nonresident: bool
 
     _routines: List[PersonRoutine]
     _during_work_rs: List[PersonRoutineWithStatus]
@@ -23,6 +24,7 @@ class Worker(BasePerson):
                  person_id: PersonID,
                  home: LocationID,
                  work: LocationID,
+                 is_nonresident: bool = False,
                  work_time: Optional[SimTimeTuple] = None,
                  regulation_compliance_prob: float = 1.0,
                  init_state: Optional[PersonState] = None):
@@ -45,11 +47,13 @@ class Worker(BasePerson):
         super().__init__(person_id=person_id,
                          home=home,
                          regulation_compliance_prob=regulation_compliance_prob,
-                         init_state=init_state)
+                         init_state=init_state,
+                         is_nonresident=is_nonresident)
 
     @property
     def work(self) -> LocationID:
         return self._work
+
 
     @property
     def assigned_locations(self) -> Sequence[LocationID]:

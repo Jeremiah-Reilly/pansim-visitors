@@ -28,12 +28,14 @@ class BasePerson(Person):
 
     _regulation_compliance_prob: float
     _go_home: bool
+    _is_nonresident: bool    
 
     def __init__(self,
                  person_id: PersonID,
                  home: LocationID,
                  regulation_compliance_prob: float = 1.0,
-                 init_state: Optional[PersonState] = None):
+                 init_state: Optional[PersonState] = None,
+                 is_nonresident: bool = False):
         """
         :param person_id: PersonID instance
         :param home: Home location id
@@ -59,6 +61,8 @@ class BasePerson(Person):
         self._hospital_ids = list(self._registry.location_ids_of_type(Hospital))
         self._go_home = False
 
+        self._is_nonresident = is_nonresident
+
     def enter_location(self, location_id: LocationID) -> bool:
         if location_id == self._home:
             self._go_home = False
@@ -73,6 +77,10 @@ class BasePerson(Person):
     @property
     def state(self) -> PersonState:
         return self._state
+
+    @property 
+    def is_nonresident(self) -> bool:
+        return self._is_nonresident
 
     @property
     def home(self) -> LocationID:

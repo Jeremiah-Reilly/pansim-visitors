@@ -82,9 +82,49 @@ def make_population(sim_config: PandemicSimConfig) -> List[Person]:
         else:
             retiree_ages.append(age)
 
+    ages_nonresidents = get_us_age_distribution(sim_config.num_nonresidents)
+    numpy_rng.shuffle(ages_nonresidents)
+    adult_ages_nonresidents = []
+    retiree_age_nonresidents = []
+    for age in ages_nonresidents:
+        if age <= 18:
+            continue
+        elif 18 < age <= 65:
+            adult_ages_nonresidents.append(age)
+        else:
+            retiree_age_nonresidents.append(age)
+
     all_homes = list(registry.location_ids_of_type(Home))
     numpy_rng.shuffle(all_homes)
     unassigned_homes = all_homes
+    
+    hotels = unassigned_homes[:sim_config.num_hotels]
+    unassigned_homes = unassigned_homes[len(hotels):]  # remove hotels
+
+
+    
+    for age in retiree_age_nonresidents:
+        home = numpy_rng.choice(hotels)
+        persons.append(Retired(person_id=PersonID(f'retired_nonresident_{str(uuid4())}', age), 
+                               home=home,
+                               is_nonresident = True,
+                               regulation_compliance_prob=sim_config.regulation_compliance_prob,
+                               init_state=PersonState(current_location=home, risk=infection_risk(age))))
+
+    for age in adult_ages_nonresidents:
+        home = numpy_rng.choice(hotels)
+        job_counselor = JobCounselor(sim_config.location_configs)
+        work_package = job_counselor.next_available_work()
+        assert work_package, 'Not enough available jobs, increase the capacity of certain businesses'
+        persons.append(Worker(person_id=PersonID(f'worker_nonresident{str(uuid4())}', age),
+                              is_nonresident = True,
+                              home=home,
+                              work=work_package.work,
+                              work_time=work_package.work_time,
+                              regulation_compliance_prob=sim_config.regulation_compliance_prob,
+                              init_state=PersonState(current_location=home, risk=infection_risk(age))))
+
+
 
     # a) Select 6.5% of retirees (age > 65) and cluster them as groups of 1 or 2 and assign each
     # group to a nursing home.

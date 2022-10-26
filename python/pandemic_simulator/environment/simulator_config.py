@@ -36,7 +36,13 @@ class PandemicSimConfig:
     """Config for setting up the simulator"""
 
     num_persons: int = 1000
-    """Number of persons in the simulator"""
+    """Number of residents in the simulator"""
+
+    num_nonresidents: int = 100
+    """Number of visitors in the simulator"""
+
+    num_hotels: int = 10
+    """Number of hotels in the simulator"""
 
     location_configs: Sequence[LocationConfig] = ()
     """Configs of all locations in the simulator"""

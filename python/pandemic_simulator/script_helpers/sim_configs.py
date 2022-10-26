@@ -17,6 +17,7 @@ http://www.worldcitiescultureforum.com/data/number-of-restaurants-per-100.000-po
 
 town_config = PandemicSimConfig(
     num_persons=10000,
+    num_hotels= 10,
     location_configs=[
         LocationConfig(Home, num=3000),
         LocationConfig(GroceryStore, num=40, num_assignees=5, state_opts=dict(visitor_capacity=30)),
@@ -32,6 +33,7 @@ town_config = PandemicSimConfig(
 
 above_medium_town_config = PandemicSimConfig(
     num_persons=4000,
+    num_hotels= 4,
     location_configs=[
         LocationConfig(Home, num=1200),
         LocationConfig(GroceryStore, num=16, num_assignees=5, state_opts=dict(visitor_capacity=30)),
@@ -61,7 +63,8 @@ medium_town_config = PandemicSimConfig(
     person_routine_assignment=DefaultPersonRoutineAssignment())
 
 small_town_config = PandemicSimConfig(
-    num_persons=1000,
+    num_persons=1100,
+    num_nonresidents=0,
     location_configs=[
         LocationConfig(Home, num=300),
         LocationConfig(GroceryStore, num=4, num_assignees=5, state_opts=dict(visitor_capacity=30)),

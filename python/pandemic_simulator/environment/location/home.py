@@ -23,3 +23,14 @@ class Home(BaseLocation[HomeState]):
 
     def update_rules(self, new_rule: LocationRule) -> None:
         pass
+
+
+class Hotel(Home):
+    """Class that implements a standard Home location. """
+    state_type = HomeState
+
+    def sync(self, sim_time: SimTime) -> None:
+        super().sync(sim_time)
+
+    def update_rules(self, new_rule: LocationRule) -> None:
+        pass

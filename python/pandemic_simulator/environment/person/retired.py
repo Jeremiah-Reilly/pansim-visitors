@@ -19,6 +19,7 @@ class Retired(BasePerson):
     def __init__(self,
                  person_id: PersonID,
                  home: LocationID,
+                 is_nonresident: bool = False,
                  regulation_compliance_prob: float = 1.0,
                  init_state: Optional[PersonState] = None):
         """
@@ -33,7 +34,8 @@ class Retired(BasePerson):
         super().__init__(person_id=person_id,
                          home=home,
                          regulation_compliance_prob=regulation_compliance_prob,
-                         init_state=init_state)
+                         init_state=init_state,
+                         is_nonresident=is_nonresident)
 
     def _sync(self, sim_time: SimTime) -> None:
         super()._sync(sim_time)

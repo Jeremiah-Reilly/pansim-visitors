@@ -17,7 +17,7 @@ def run_pandemic_gym_env() -> None:
     # select a simulator config
     sim_config = ps.sh.small_town_config
 
-    episodes = 10
+    episodes = 2
 
     # setup viz
     viz = []
