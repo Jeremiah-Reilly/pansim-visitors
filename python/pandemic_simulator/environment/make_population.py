@@ -4,6 +4,8 @@ from uuid import uuid4
 
 import numpy as np
 
+from python.pandemic_simulator.environment.interfaces.person import TravelSchedule
+
 from .interfaces import globals, Risk, Person, PersonID, PersonState, BusinessBaseLocation
 from .job_counselor import JobCounselor
 from .location import Home, School
@@ -67,6 +69,7 @@ def make_population(sim_config: PandemicSimConfig) -> List[Person]:
     numpy_rng = globals.numpy_rng
 
     persons: List[Person] = []
+    nonresidents: List[Person] = []
 
     # ages based on the age profile of USA
     ages = get_us_age_distribution(sim_config.num_persons)
@@ -101,28 +104,36 @@ def make_population(sim_config: PandemicSimConfig) -> List[Person]:
     hotels = unassigned_homes[:sim_config.num_hotels]
     unassigned_homes = unassigned_homes[len(hotels):]  # remove hotels
 
+    travel_schedules = []
+    for _ in range(len(adult_ages_nonresidents) + len(retiree_age_nonresidents)):
+        travel_schedules.append(TravelSchedule(np.random.choice(np.arange(sim_config.days_to_run))))
+
 
     
     for age in retiree_age_nonresidents:
         home = numpy_rng.choice(hotels)
-        persons.append(Retired(person_id=PersonID(f'retired_nonresident_{str(uuid4())}', age), 
+        old_visitor = Retired(person_id=PersonID(f'retired_nonresident_{str(uuid4())}', age), 
                                home=home,
                                is_nonresident = True,
                                regulation_compliance_prob=sim_config.regulation_compliance_prob,
-                               init_state=PersonState(current_location=home, risk=infection_risk(age))))
+                               init_state=PersonState(current_location=home, risk=infection_risk(age)))
+        old_visitor.travel_schedule = travel_schedules.pop(0)
+        persons.append(old_visitor)
+        nonresidents.append(old_visitor)
 
     for age in adult_ages_nonresidents:
         home = numpy_rng.choice(hotels)
         job_counselor = JobCounselor(sim_config.location_configs)
         work_package = job_counselor.next_available_work()
         assert work_package, 'Not enough available jobs, increase the capacity of certain businesses'
-        persons.append(Worker(person_id=PersonID(f'worker_nonresident{str(uuid4())}', age),
-                              is_nonresident = True,
-                              home=home,
-                              work=work_package.work,
-                              work_time=work_package.work_time,
-                              regulation_compliance_prob=sim_config.regulation_compliance_prob,
-                              init_state=PersonState(current_location=home, risk=infection_risk(age))))
+        worker_visitor = Retired(person_id=PersonID(f'retired_nonresident_{str(uuid4())}', age), 
+                               home=home,
+                               is_nonresident = True,
+                               regulation_compliance_prob=sim_config.regulation_compliance_prob,
+                               init_state=PersonState(current_location=home, risk=infection_risk(age)))
+        worker_visitor.travel_schedule = travel_schedules.pop(0)
+        persons.append(worker_visitor)
+        nonresidents.append(old_visitor)
 
 
 
@@ -199,4 +210,4 @@ def make_population(sim_config: PandemicSimConfig) -> List[Person]:
                                regulation_compliance_prob=sim_config.regulation_compliance_prob,
                                init_state=PersonState(current_location=home, risk=infection_risk(age))))
 
-    return persons
+    return persons.concatenate(nonresidents)

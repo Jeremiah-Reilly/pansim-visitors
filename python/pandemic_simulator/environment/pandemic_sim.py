@@ -2,10 +2,14 @@
 
 from collections import defaultdict, OrderedDict
 from itertools import product as cartesianproduct, combinations
+from multiprocessing.dummy import active_children
+from os import remove
+from pickle import LIST
 from typing import DefaultDict, Dict, List, Optional, Sequence, cast, Type
 
 import numpy as np
 from orderedset import OrderedSet
+from python.pandemic_simulator.environment.person.base import BasePerson
 
 from .contact_tracing import MaxSlotContactTracer
 from .infection_model import SEIRModel, SpreadProbabilityParams
@@ -45,12 +49,14 @@ class PandemicSim:
 
     _type_to_locations: DefaultDict
     _hospital_ids: List[LocationID]
-    _persons: Sequence[Person]
+    _persons: List[Person]
+    _nonresidents: List[Person]
     _state: PandemicSimState
 
     def __init__(self,
                  locations: Sequence[Location],
-                 persons: Sequence[Person],
+                 persons: List[Person],
+                 nonresidents: List[Person],
                  infection_model: Optional[InfectionModel] = None,
                  pandemic_testing: Optional[PandemicTesting] = None,
                  contact_tracer: Optional[ContactTracer] = None,
@@ -93,6 +99,7 @@ class PandemicSim:
         self._hospital_ids = [loc.id for loc in locations if isinstance(loc, Hospital)]
 
         self._persons = persons
+        self._nonresidents = nonresidents
 
         # assign routines
         if person_routine_assignment is not None:
@@ -133,6 +140,8 @@ class PandemicSim:
 
         # make population
         persons = make_population(sim_config)
+        nonresidents = persons[sim_config.num_persons]
+        persons = persons[:sim_config.num_persons]
 
         # make infection model
         infection_model = SEIRModel(
@@ -153,6 +162,7 @@ class PandemicSim:
 
         # setup sim
         return PandemicSim(persons=persons,
+                           nonresidents=nonresidents,
                            locations=locations,
                            infection_model=infection_model,
                            pandemic_testing=pandemic_testing,
@@ -267,6 +277,30 @@ class PandemicSim:
         for location in self._id_to_location.values():
             location.sync(self._state.sim_time)
         self._registry.update_location_specific_information()
+
+        #add / remove nonresidents according to travel scedule
+        for person in self._nonresidents:
+            schedule = person.travel_schedule
+            assert schedule != None
+            now_time = self._state.sim_time.in_hours()
+            # remove person
+            if schedule.active and (now_time > schedule.end_day * 24 or now_time < schedule.start_day * 24):
+                self._persons.remove(person)
+                print("removed " + person.id)
+                current_location = self._registry.location_register[person.state.current_location]
+                current_location.remove_person_from_location(person.id)  # exit current
+                self._id_to_person.pop(person.id)
+                schedule.active = False
+            # add person
+            elif not schedule.active and (now_time >= schedule.start_day and now_time <= schedule.end_day):
+                self._persons.append(person)
+                print("added " + person.id)
+                current_location = self._registry.location_register[person.state.current_location]
+                current_location.add_person_to_location(person.id)
+                self._id_to_person.update({person.id: person})
+                schedule.active = True
+
+            
 
         # call person steps (randomize order)
         for i in self._numpy_rng.randint(0, len(self._persons), len(self._persons)):

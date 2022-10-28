@@ -44,6 +44,9 @@ class PandemicSimConfig:
     num_hotels: int = 10
     """Number of hotels in the simulator"""
 
+    days_to_run: int = 120
+    """"number days to run the sim for"""
+
     location_configs: Sequence[LocationConfig] = ()
     """Configs of all locations in the simulator"""
 

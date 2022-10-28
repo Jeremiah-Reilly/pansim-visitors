@@ -140,6 +140,10 @@ class CityRegistry(Registry):
     @property
     def location_ids(self) -> Set[LocationID]:
         return self._location_ids
+    
+    @property
+    def location_register(self) ->  Dict[LocationID, Location]:
+        return self._location_register
 
     @property
     def location_ids_with_social_events(self) -> List[LocationID]:

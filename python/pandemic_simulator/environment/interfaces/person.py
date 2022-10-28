@@ -1,8 +1,11 @@
 # Confidential, Copyright 2020, Sony Corporation of America, All rights reserved.
 
 from abc import ABC, abstractmethod
+from calendar import day_abbr
 from dataclasses import dataclass, field
 from typing import Optional, Sequence, List, Tuple
+
+import numpy as np
 
 from .contact_tracer import ContactTracer
 from .ids import PersonID, LocationID
@@ -34,6 +37,31 @@ class PersonState:
     avoid_location_types: List[type] = field(default_factory=list, init=False)
     not_infection_probability: float = field(default=1., init=False)
     not_infection_probability_history: List[Tuple[LocationID, float]] = field(default_factory=list, init=False)
+
+class TravelSchedule:
+
+    start_day: int
+    """The day the visitor enters the sim."""
+    end_day: int
+    """The day the visitor exits the sim."""
+    active: bool 
+    """Whether the person is active (they are in the city)."""
+
+    
+
+    def __init__(self, start: int):
+        self.start_day = start
+        duration = np.random.choice(np.arange(1,30))
+        self.end_day = start + duration
+        self.active = True
+
+    @property
+    def start_day(self)-> int:
+        return self.start_day
+    
+    @property
+    def end_day(self)-> int:
+        return self.end_day
 
 
 class Person(ABC):
@@ -98,6 +126,13 @@ class Person(ABC):
 
         :return: A collection of LocationIDs
         """
+        pass
+    
+    @property
+    @abstractmethod
+    def travel_schedule(self)-> TravelSchedule:
+        pass
+
 
     @property
     @abstractmethod

@@ -1,7 +1,7 @@
 # Confidential, Copyright 2020, Sony Corporation of America, All rights reserved.
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Set, Mapping, Tuple, Union
+from typing import List, Dict, Optional, Set, Mapping, Tuple, Union
 
 from .ids import LocationID, PersonID
 from .infection_model import InfectionSummary
@@ -61,6 +61,12 @@ class Registry(ABC):
     @abstractmethod
     def person_ids(self) -> Set[PersonID]:
         """Return a list of registered person ids"""
+        pass
+
+    @property
+    @abstractmethod
+    def location_register(self) -> Dict[LocationID, Location]:
+        """Return a dictionary of registered location ids -> locations"""
         pass
 
     @property
