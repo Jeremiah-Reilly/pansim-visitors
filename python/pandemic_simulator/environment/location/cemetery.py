@@ -45,7 +45,7 @@ class Cemetery(BaseLocation[CemeteryState]):
 
     def remove_person_from_location(self, person_id: PersonID) -> None:
         if person_id in self._state.assignees_in_location:
-            raise ValueError(f'Person {person_id} is already cremated. Cannot remove!')
+            raise ValueError(f'Person {person_id} is already cremated. Cannot remove ;P')
         elif person_id in self._state.visitors_in_location:
             self._state.visitors_in_location.remove(person_id)
         else:

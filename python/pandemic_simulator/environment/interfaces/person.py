@@ -40,28 +40,28 @@ class PersonState:
 
 class TravelSchedule:
 
-    start_day: int
+    _start_day: int
     """The day the visitor enters the sim."""
-    end_day: int
+    _end_day: int
     """The day the visitor exits the sim."""
-    active: bool 
+    _active: bool 
     """Whether the person is active (they are in the city)."""
 
     
 
     def __init__(self, start: int):
-        self.start_day = start
+        self._start_day = start
         duration = np.random.choice(np.arange(1,30))
-        self.end_day = start + duration
-        self.active = True
+        self._end_day = start + duration
+        self._active = True
 
     @property
     def start_day(self)-> int:
-        return self.start_day
+        return self._start_day
     
     @property
     def end_day(self)-> int:
-        return self.end_day
+        return self._end_day
 
 
 class Person(ABC):
@@ -126,11 +126,15 @@ class Person(ABC):
 
         :return: A collection of LocationIDs
         """
-        pass
     
     @property
     @abstractmethod
     def travel_schedule(self)-> TravelSchedule:
+        pass
+
+    @travel_schedule.setter
+    @abstractmethod
+    def travel_schedule(self, schedule: TravelSchedule) -> None:
         pass
 
 

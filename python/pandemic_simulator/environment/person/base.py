@@ -4,7 +4,7 @@ from copy import deepcopy
 from typing import Optional, List, Sequence, cast
 
 import numpy as np
-from python.pandemic_simulator.environment.interfaces.person import TravelSchedule
+from ..interfaces.person import TravelSchedule
 
 from ..interfaces import Person, PersonID, PersonState, LocationID, Risk, Registry, PandemicRegulation, \
     SimTime, NoOP, NOOP, SimTimeTuple, PandemicTestResult, ContactTracer, globals
@@ -97,11 +97,15 @@ class BasePerson(Person):
 
     @property
     def assigned_locations(self) -> Sequence[LocationID]:
-        return self._home
+        return self._home, 
 
     @property
     def travel_schedule(self) -> TravelSchedule:
         return self._travel_schedule
+
+    @travel_schedule.setter
+    def travel_schedule(self, schedule: TravelSchedule) -> None:
+        self._travel_schedule = schedule
 
     def _sync(self, sim_time: SimTime) -> None:
         """Sync sim time specific variables."""

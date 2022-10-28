@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import numpy as np
 
-from python.pandemic_simulator.environment.interfaces.person import TravelSchedule
+from .interfaces.person import TravelSchedule
 
 from .interfaces import globals, Risk, Person, PersonID, PersonState, BusinessBaseLocation
 from .job_counselor import JobCounselor
@@ -126,7 +126,7 @@ def make_population(sim_config: PandemicSimConfig) -> List[Person]:
         job_counselor = JobCounselor(sim_config.location_configs)
         work_package = job_counselor.next_available_work()
         assert work_package, 'Not enough available jobs, increase the capacity of certain businesses'
-        worker_visitor = Retired(person_id=PersonID(f'retired_nonresident_{str(uuid4())}', age), 
+        worker_visitor = Retired(person_id=PersonID(f'worker_nonresident_{str(uuid4())}', age), 
                                home=home,
                                is_nonresident = True,
                                regulation_compliance_prob=sim_config.regulation_compliance_prob,
@@ -210,4 +210,5 @@ def make_population(sim_config: PandemicSimConfig) -> List[Person]:
                                regulation_compliance_prob=sim_config.regulation_compliance_prob,
                                init_state=PersonState(current_location=home, risk=infection_risk(age))))
 
-    return persons.concatenate(nonresidents)
+    persons.extend(nonresidents)
+    return persons

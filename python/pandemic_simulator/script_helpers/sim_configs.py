@@ -63,8 +63,8 @@ medium_town_config = PandemicSimConfig(
     person_routine_assignment=DefaultPersonRoutineAssignment())
 
 small_town_config = PandemicSimConfig(
-    num_persons=1100,
-    num_nonresidents=0,
+    num_persons=1000,
+    num_nonresidents=100,
     location_configs=[
         LocationConfig(Home, num=300),
         LocationConfig(GroceryStore, num=4, num_assignees=5, state_opts=dict(visitor_capacity=30)),

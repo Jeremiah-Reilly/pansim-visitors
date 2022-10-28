@@ -50,6 +50,10 @@ class Retired(BasePerson):
                 self._routines.append(routine)
                 self._routines_with_status.append(PersonRoutineWithStatus(routine))
 
+
+    # def set_travel_schedule(self, schedule: TravelSchedule):
+    #     self._travel_schedule = schedule
+
     def step(self, sim_time: SimTime, contact_tracer: Optional[ContactTracer] = None) -> Optional[NoOP]:
         step_ret = super().step(sim_time, contact_tracer)
         if step_ret != NOOP:

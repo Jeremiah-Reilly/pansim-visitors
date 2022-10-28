@@ -9,7 +9,6 @@ from typing import DefaultDict, Dict, List, Optional, Sequence, cast, Type
 
 import numpy as np
 from orderedset import OrderedSet
-from python.pandemic_simulator.environment.person.base import BasePerson
 
 from .contact_tracing import MaxSlotContactTracer
 from .infection_model import SEIRModel, SpreadProbabilityParams
@@ -51,6 +50,7 @@ class PandemicSim:
     _hospital_ids: List[LocationID]
     _persons: List[Person]
     _nonresidents: List[Person]
+    _pop_over_time: List[int]
     _state: PandemicSimState
 
     def __init__(self,
@@ -140,8 +140,14 @@ class PandemicSim:
 
         # make population
         persons = make_population(sim_config)
-        nonresidents = persons[sim_config.num_persons]
-        persons = persons[:sim_config.num_persons]
+        x = len(persons)
+        y = sim_config.num_persons
+        num_nonres = int((x - y) / 2)
+        print(type(persons))
+        nonresidents = persons[sim_config.num_persons + num_nonres:]
+        print(len(nonresidents))
+        persons = persons[:sim_config.num_persons + num_nonres]
+        print(len(persons))
 
         # make infection model
         infection_model = SEIRModel(
@@ -284,23 +290,22 @@ class PandemicSim:
             assert schedule != None
             now_time = self._state.sim_time.in_hours()
             # remove person
-            if schedule.active and (now_time > schedule.end_day * 24 or now_time < schedule.start_day * 24):
+            if schedule._active and (now_time > schedule.end_day * 24 or now_time < schedule.start_day * 24):
                 self._persons.remove(person)
-                print("removed " + person.id)
+                print("removed ", person.id.name, " at ", str(now_time))
                 current_location = self._registry.location_register[person.state.current_location]
                 current_location.remove_person_from_location(person.id)  # exit current
                 self._id_to_person.pop(person.id)
-                schedule.active = False
+                schedule._active = False
             # add person
-            elif not schedule.active and (now_time >= schedule.start_day and now_time <= schedule.end_day):
+            elif not schedule._active and (now_time >= schedule.start_day * 24 and now_time <= schedule.end_day * 24):
                 self._persons.append(person)
-                print("added " + person.id)
-                current_location = self._registry.location_register[person.state.current_location]
-                current_location.add_person_to_location(person.id)
+                print("added ", person.id.name, " at ", str(now_time))
+                person.enter_location(person.state.current_location)
                 self._id_to_person.update({person.id: person})
-                schedule.active = True
+                schedule._active = True
 
-            
+        
 
         # call person steps (randomize order)
         for i in self._numpy_rng.randint(0, len(self._persons), len(self._persons)):
