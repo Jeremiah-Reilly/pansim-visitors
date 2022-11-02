@@ -46,6 +46,7 @@ class TravelSchedule:
     """The day the visitor exits the sim."""
     _active: bool 
     """Whether the person is active (they are in the city)."""
+    _num_visits: int
 
     
 
@@ -54,6 +55,7 @@ class TravelSchedule:
         duration = np.random.choice(np.arange(1,30))
         self._end_day = start + duration
         self._active = True
+        self._num_visits = np.random.choice(np.arange(1,3))
 
     @property
     def start_day(self)-> int:
@@ -62,6 +64,18 @@ class TravelSchedule:
     @property
     def end_day(self)-> int:
         return self._end_day
+    
+    def start_trip(self)-> None:
+        self._active = True
+        self._num_visits -= 1
+    
+    def end_trip(self)-> None:
+        self._active = False
+        if self._num_visits > 0:
+            self.start_day = self.end_day + np.random.choice(np.arange(7,30))
+            duration = np.random.choice(np.arange(1,30))
+            self._end_day = self._start_day + duration
+
 
 
 class Person(ABC):

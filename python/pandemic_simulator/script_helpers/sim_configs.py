@@ -34,6 +34,7 @@ town_config = PandemicSimConfig(
 above_medium_town_config = PandemicSimConfig(
     num_persons=4000,
     num_hotels= 4,
+    num_nonresidents=500,
     location_configs=[
         LocationConfig(Home, num=1200),
         LocationConfig(GroceryStore, num=16, num_assignees=5, state_opts=dict(visitor_capacity=30)),

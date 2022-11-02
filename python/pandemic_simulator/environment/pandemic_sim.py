@@ -50,7 +50,7 @@ class PandemicSim:
     _hospital_ids: List[LocationID]
     _persons: List[Person]
     _nonresidents: List[Person]
-    _pop_over_time: List[int]
+    # _pop_over_time_file: 
     _state: PandemicSimState
 
     def __init__(self,
@@ -283,27 +283,34 @@ class PandemicSim:
         for location in self._id_to_location.values():
             location.sync(self._state.sim_time)
         self._registry.update_location_specific_information()
-
+        infectious_states = {InfectionSummary.INFECTED, InfectionSummary.CRITICAL}
         #add / remove nonresidents according to travel scedule
+        now_time = self._state.sim_time.in_hours()
         for person in self._nonresidents:
             schedule = person.travel_schedule
             assert schedule != None
             now_time = self._state.sim_time.in_hours()
             # remove person
-            if schedule._active and (now_time > schedule.end_day * 24 or now_time < schedule.start_day * 24):
+            if schedule._active and (now_time > schedule.end_day * 24 or now_time < schedule.start_day * 24) and person.state.infection_state.summary != InfectionSummary.DEAD:
                 self._persons.remove(person)
                 print("removed ", person.id.name, " at ", str(now_time))
                 current_location = self._registry.location_register[person.state.current_location]
                 current_location.remove_person_from_location(person.id)  # exit current
                 self._id_to_person.pop(person.id)
-                schedule._active = False
+                schedule.end_trip()
             # add person
             elif not schedule._active and (now_time >= schedule.start_day * 24 and now_time <= schedule.end_day * 24):
                 self._persons.append(person)
+                if person.state.infection_state.summary in infectious_states:
+                    person.state.infection_state.summary = InfectionSummary.RECOVERED
                 print("added ", person.id.name, " at ", str(now_time))
                 person.enter_location(person.state.current_location)
                 self._id_to_person.update({person.id: person})
-                schedule._active = True
+                schedule.start_trip()
+        
+        if now_time % 24 == 0:
+            print(len(self._persons))
+            np.save(file="docs\output\pop_data", arr=[len(self._persons)])
 
         
 
