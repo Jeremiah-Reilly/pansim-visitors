@@ -64,6 +64,8 @@ class PandemicSim:
     _nonresidents: List[Person]
     # _pop_over_time_file: 
     _state: PandemicSimState
+    _bob_nonresident: str
+    _bob_resident: str
 
     def __init__(self,
                  locations: Sequence[Location],
@@ -118,6 +120,9 @@ class PandemicSim:
                 assert _loc.__name__ in globals.registry.location_types, (
                     f'Required location type {_loc.__name__} not found. Modify sim_config to include it.')
             person_routine_assignment.assign_routines(persons)
+
+        self._bob_nonresident = self._numpy_rng(persons)
+        self._bob_resident = self._numpy_rng(nonresidents)
 
         self._state = PandemicSimState(
             id_to_person_state={person.id: person.state for person in persons},

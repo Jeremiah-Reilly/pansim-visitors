@@ -122,9 +122,6 @@ def make_population(sim_config: PandemicSimConfig) -> List[Person]:
         worker_visitor.travel_schedule = travel_schedules.pop(0)
         persons.append(worker_visitor)
         nonresidents.append(worker_visitor)
-
-    bob_worker_nonresident = numpy_rng.choice(nonresidents)
-    bob_worker_nonresident.person_id = "bob_nonresident_worker"
     
     for age in retiree_age_nonresidents:
         home = numpy_rng.choice(hotels)
@@ -211,10 +208,6 @@ def make_population(sim_config: PandemicSimConfig) -> List[Person]:
                               init_state=PersonState(current_location=home, risk=infection_risk(age)))
         persons.append(worker)
         workers.append(worker)
-    bob_worker_resident = numpy_rng.choice(workers)
-    bob_worker_resident.person_id = "bob_resident_worker"
-    print(bob_worker_resident.person_id)
-    print(persons.__contains__(bob_worker_resident))
 
     for home, age in non_nursing_homes_ages:
         persons.append(Retired(person_id=PersonID(f'retired_{str(uuid4())}', age),
