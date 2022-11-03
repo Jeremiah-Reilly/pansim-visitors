@@ -44,6 +44,8 @@ class BaseMatplotLibViz(PandemicViz):
     _gis: List[np.ndarray]
     _gts: List[np.ndarray]
     _stages: List[np.ndarray]
+    _bob_res: List[np.ndarray]
+    _bob_nonres: List[np.ndarray]
     _rewards: List[float]
 
     _gis_legend: List[str]
@@ -83,14 +85,14 @@ class BaseMatplotLibViz(PandemicViz):
         self._gis.append(obs.global_infection_summary)
         self._gts.append(obs.global_testing_summary)
         self._stages.append(obs.stage)
-        self._bob_nonres
-        self._bob_res.append(obs.nonre)
 
     def record_state(self, state: PandemicSimState) -> None:
         obs = PandemicObservation.create_empty()
         obs.update_obs_with_sim_state(state)
         self._bob_nonres.append(state.resident_bob_infection_summary)
         self._bob_res.append(state.nonresident_bob_infection_summary)
+        print(self._bob_nonres)
+        print(self._bob_res)
         self.record_obs(obs=obs)
 
     def record(self, data: Any) -> None:
@@ -146,6 +148,7 @@ class BaseMatplotLibViz(PandemicViz):
 
     def plot_bob(self, ax: Optional[Axes] = None, **kwargs: Any) -> None:
         ax = ax or plt.gca()
+        print(self._bob_nonres)
         bob_nonres = np.concatenate(self._bob_nonres).squeeze()
         bob_res = np.concatenate(self._bob_res).squeeze()
         ax.plot(bob_nonres)

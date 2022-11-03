@@ -41,7 +41,7 @@ def run_pandemic_gym_env() -> None:
         # run stage-0 action steps in the environment
         wrap.reset()
         Reward = 0
-        for i in trange(120, desc='Simulating day'):
+        for i in trange(10, desc='Simulating day'):
             
             if i==0:
                 action = 0 

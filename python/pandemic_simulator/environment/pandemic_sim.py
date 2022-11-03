@@ -64,8 +64,8 @@ class PandemicSim:
     _nonresidents: List[Person]
     # _pop_over_time_file: 
     _state: PandemicSimState
-    _bob_nonresident: str
-    _bob_resident: str
+    _bob_nonresident: PersonID
+    _bob_resident: PersonID
 
     def __init__(self,
                  locations: Sequence[Location],
@@ -121,8 +121,12 @@ class PandemicSim:
                     f'Required location type {_loc.__name__} not found. Modify sim_config to include it.')
             person_routine_assignment.assign_routines(persons)
 
-        self._bob_nonresident = self._numpy_rng(persons)
-        self._bob_resident = self._numpy_rng(nonresidents)
+        self._bob_nonresident = self._numpy_rng.choice(self._nonresidents).id
+        residents = []
+        for person in self._persons:
+            if not person.is_nonresident:
+                residents.append(person)
+        self._bob_resident = self._numpy_rng.choice(residents).id
 
         self._state = PandemicSimState(
             id_to_person_state={person.id: person.state for person in persons},
@@ -384,9 +388,9 @@ class PandemicSim:
             self._state.global_infection_summary = global_infection_summary
         self._state.infection_above_threshold = (self._state.global_testing_state.summary[InfectionSummary.INFECTED]
                                                  >= self._infection_threshold)
-        self._state.resident_bob_infection_summary = (infection_summary_to_int_for_graph(self._id_to_person["bob_resident_worker"].state.infection_state.summary))
-        if self._id_to_person["bob_nonresident_worker"] != None:
-            summary = self._id_to_person["bob_nonresident_worker"].state.infection_state.summary
+        self._state.resident_bob_infection_summary = (infection_summary_to_int_for_graph(self._id_to_person[self._bob_resident].state.infection_state.summary))
+        if self._id_to_person.get(self._bob_nonresident) != None:
+            summary = self._id_to_person[self._bob_nonresident].state.infection_state.summary
             self._state.nonresident_bob_infection_summary  = infection_summary_to_int_for_graph(summary)
         else:
             self._state.nonresident_bob_infection_summary = -1
