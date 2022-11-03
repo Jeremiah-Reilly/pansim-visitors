@@ -65,14 +65,19 @@ class TravelSchedule:
     def end_day(self)-> int:
         return self._end_day
     
-    def start_trip(self)-> None:
+    def start_trip(self, regulation_stage: int)-> bool:
+        if regulation_stage >= 3: 
+            self._start_day += 1
+            self._end_day += 1
+            return False
         self._active = True
         self._num_visits -= 1
+        return True
     
     def end_trip(self)-> None:
         self._active = False
         if self._num_visits > 0:
-            self.start_day = self.end_day + np.random.choice(np.arange(7,30))
+            self._start_day = self.end_day + np.random.choice(np.arange(7,30))
             duration = np.random.choice(np.arange(1,30))
             self._end_day = self._start_day + duration
 

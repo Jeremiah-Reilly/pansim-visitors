@@ -64,6 +64,8 @@ class BaseMatplotLibViz(PandemicViz):
         self._gis = []
         self._gts = []
         self._stages = []
+        self._bob_res = []
+        self._bob_nonres = []
 
         self._gis_legend = []
 
@@ -81,10 +83,14 @@ class BaseMatplotLibViz(PandemicViz):
         self._gis.append(obs.global_infection_summary)
         self._gts.append(obs.global_testing_summary)
         self._stages.append(obs.stage)
+        self._bob_nonres
+        self._bob_res.append(obs.nonre)
 
     def record_state(self, state: PandemicSimState) -> None:
         obs = PandemicObservation.create_empty()
         obs.update_obs_with_sim_state(state)
+        self._bob_nonres.append(state.resident_bob_infection_summary)
+        self._bob_res.append(state.nonresident_bob_infection_summary)
         self.record_obs(obs=obs)
 
     def record(self, data: Any) -> None:
@@ -135,6 +141,17 @@ class BaseMatplotLibViz(PandemicViz):
         ax.plot(stages)
         ax.set_ylim(-0.1, kwargs.get('num_stages', np.max(self._stages)) + 1)
         ax.set_title('Stage')
+        ax.set_xlabel('time (days)')
+        ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+    def plot_bob(self, ax: Optional[Axes] = None, **kwargs: Any) -> None:
+        ax = ax or plt.gca()
+        bob_nonres = np.concatenate(self._bob_nonres).squeeze()
+        bob_res = np.concatenate(self._bob_res).squeeze()
+        ax.plot(bob_nonres)
+        ax.plot(bob_res)
+        ax.set_ylim(-0.1, kwargs.get('bob_stage', np.max(self._bob_nonres)) + 1)
+        ax.set_title('Bob')
         ax.set_xlabel('time (days)')
         ax.yaxis.set_major_locator(MaxNLocator(integer=True))
 

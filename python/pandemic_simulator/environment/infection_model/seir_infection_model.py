@@ -11,7 +11,7 @@ from scipy.stats import truncnorm
 from ..interfaces import IndividualInfectionState, InfectionModel, InfectionSummary, Risk, globals
 from ...utils import required
 
-__all__ = ['SEIRInfectionState', 'SEIRModel', 'SpreadProbabilityParams']
+__all__ = ['SEIRInfectionState', 'SEIRModel', 'SpreadProbabilityParams', '_SEIRLabel']
 
 
 class _SEIRLabel(Enum):

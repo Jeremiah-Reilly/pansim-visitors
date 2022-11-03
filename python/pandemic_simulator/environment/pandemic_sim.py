@@ -5,13 +5,14 @@ from itertools import product as cartesianproduct, combinations
 from multiprocessing.dummy import active_children
 from os import remove
 from pickle import LIST
+from enum import Enum
 from typing import DefaultDict, Dict, List, Optional, Sequence, cast, Type
 
 import numpy as np
 from orderedset import OrderedSet
 
 from .contact_tracing import MaxSlotContactTracer
-from .infection_model import SEIRModel, SpreadProbabilityParams
+from .infection_model import SEIRModel, SpreadProbabilityParams, SEIRInfectionState, _SEIRLabel
 from .interfaces import ContactRate, ContactTracer, PandemicRegulation, PandemicSimState, PandemicTesting, \
     PandemicTestResult, \
     DEFAULT, GlobalTestingState, InfectionModel, InfectionSummary, Location, LocationID, Person, PersonID, Registry, \
@@ -31,6 +32,17 @@ def make_locations(sim_config: PandemicSimConfig) -> List[Location]:
                                  **config.extra_opts)  # type: ignore
             for config in sim_config.location_configs for i in range(config.num)]
 
+def infection_summary_to_int_for_graph(summary: InfectionSummary) -> int:
+        if summary == InfectionSummary.NONE:
+            return 0
+        elif summary == InfectionSummary.INFECTED:
+            return 1
+        elif summary == InfectionSummary.CRITICAL:
+            return 2
+        elif summary == InfectionSummary.RECOVERED:
+            return 3
+        elif summary == InfectionSummary.DEAD:
+            return 4
 
 class PandemicSim:
     """Class that implements the pandemic simulator."""
@@ -97,7 +109,6 @@ class PandemicSim:
         for loc in locations:
             self._type_to_locations[type(loc)].append(loc)
         self._hospital_ids = [loc.id for loc in locations if isinstance(loc, Hospital)]
-
         self._persons = persons
         self._nonresidents = nonresidents
 
@@ -113,6 +124,8 @@ class PandemicSim:
             id_to_location_state={location.id: location.state for location in locations},
             location_type_infection_summary={type(location): 0 for location in locations},
             global_infection_summary={s: 0 for s in sorted_infection_summary},
+            nonresident_bob_infection_summary=0,
+            resident_bob_infection_summary=0,
             global_testing_state=GlobalTestingState(summary={s: len(persons) if s == InfectionSummary.NONE else 0
                                                              for s in sorted_infection_summary},
                                                     num_tests=0),
@@ -143,7 +156,6 @@ class PandemicSim:
         x = len(persons)
         y = sim_config.num_persons
         num_nonres = int((x - y) / 2)
-        print(type(persons))
         nonresidents = persons[sim_config.num_persons + num_nonres:]
         print(len(nonresidents))
         persons = persons[:sim_config.num_persons + num_nonres]
@@ -291,7 +303,8 @@ class PandemicSim:
             assert schedule != None
             now_time = self._state.sim_time.in_hours()
             # remove person
-            if schedule._active and (now_time > schedule.end_day * 24 or now_time < schedule.start_day * 24) and person.state.infection_state.summary != InfectionSummary.DEAD:
+            if schedule._active and (now_time > schedule.end_day * 24 or now_time < schedule.start_day * 24) and \
+                (person.state.infection_state == None or person.state.infection_state.summary != InfectionSummary.DEAD):
                 self._persons.remove(person)
                 print("removed ", person.id.name, " at ", str(now_time))
                 current_location = self._registry.location_register[person.state.current_location]
@@ -300,13 +313,20 @@ class PandemicSim:
                 schedule.end_trip()
             # add person
             elif not schedule._active and (now_time >= schedule.start_day * 24 and now_time <= schedule.end_day * 24):
-                self._persons.append(person)
-                if person.state.infection_state.summary in infectious_states:
-                    person.state.infection_state.summary = InfectionSummary.RECOVERED
-                print("added ", person.id.name, " at ", str(now_time))
-                person.enter_location(person.state.current_location)
-                self._id_to_person.update({person.id: person})
-                schedule.start_trip()
+                if schedule.start_trip(self._state.regulation_stage):
+                    self._persons.append(person)
+                    if person.state.infection_state != None and person.state.infection_state.summary in infectious_states:
+                        pers_state = cast(SEIRInfectionState, person.state.infection_state)
+                        new_state = SEIRInfectionState(summary=InfectionSummary.RECOVERED,
+                                  spread_probability=pers_state.spread_probability,
+                                  exposed_rnb=pers_state.exposed_rnb,
+                                  is_hospitalized=pers_state.is_hospitalized,
+                                  shows_symptoms=pers_state.shows_symptoms,
+                                  label=_SEIRLabel.recovered)
+                        person.state.infection_state = new_state
+                    print("added ", person.id.name, " at ", str(now_time))
+                    person.enter_location(person.state.current_location)
+                    self._id_to_person.update({person.id: person})
         
         if now_time % 24 == 0:
             print(len(self._persons))
@@ -359,6 +379,13 @@ class PandemicSim:
             self._state.global_infection_summary = global_infection_summary
         self._state.infection_above_threshold = (self._state.global_testing_state.summary[InfectionSummary.INFECTED]
                                                  >= self._infection_threshold)
+        self._state.resident_bob_infection_summary = (infection_summary_to_int_for_graph(self._id_to_person["bob_resident_worker"].state.infection_state.summary))
+        if self._id_to_person["bob_nonresident_worker"] != None:
+            summary = self._id_to_person["bob_nonresident_worker"].state.infection_state.summary
+            self._state.nonresident_bob_infection_summary  = infection_summary_to_int_for_graph(summary)
+        else:
+            self._state.nonresident_bob_infection_summary = -1
+
 
         self._state.global_location_summary = self._registry.global_location_summary
 
@@ -371,6 +398,7 @@ class PandemicSim:
     def step_day(self, hours_in_a_day: int = 24) -> None:
         for _ in range(hours_in_a_day):
             self.step()
+    
 
     @staticmethod
     def _get_cr_from_social_distancing(location: Location,
@@ -442,6 +470,8 @@ class PandemicSim:
             location_type_infection_summary={type(location): 0 for location in self._id_to_location.values()},
 
             global_infection_summary={s: 0 for s in sorted_infection_summary},
+            resident_bob_infection_summary=0,
+            nonresident_bob_infection_summary=0,
             global_location_summary=self._registry.global_location_summary,
             global_testing_state=GlobalTestingState(summary={s: num_persons if s == InfectionSummary.NONE else 0
                                                              for s in sorted_infection_summary},
