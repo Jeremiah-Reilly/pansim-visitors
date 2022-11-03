@@ -263,19 +263,21 @@ class SEIRModel(InfectionModel):
         return dividend / divisor
 
     def step(self, subject_state: Optional[IndividualInfectionState], subject_age: int,
-             subject_risk: Risk, infection_probability: float) -> IndividualInfectionState:
+             subject_risk: Risk, infection_probability: float, infect: bool) -> IndividualInfectionState:
         """
         This method implements the SEIR model for the infection.
         :param subject_state: Current SEIR state for the subject.
         :param subject_age: Age of the subject.
         :param subject_risk: Health risk for the subject.
         :param infection_probability: Probability of getting infected.
+        :param infect: infect the current person as pre-symp
 
         :return: New SEIR state of the subject.
         """
         show_symptoms_states = {_SEIRLabel.symp, _SEIRLabel.hospitalized, _SEIRLabel.needs_hospitalization}
         pandemic_started = self._pandemic_started_counter >= self._pandemic_start_limit
         label = _SEIRLabel.susceptible if pandemic_started else _SEIRLabel.exposed
+        label = _SEIRLabel.pre_symp if infect else label #aaaaaaaa#
         self._pandemic_started_counter += 1 if not pandemic_started else 0
 
         subject_state = cast(SEIRInfectionState, subject_state) if subject_state \

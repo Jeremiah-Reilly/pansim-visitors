@@ -47,6 +47,9 @@ class PandemicSimConfig:
     days_to_run: int = 120
     """"number days to run the sim for"""
 
+    nonresident_infection_seed: bool = True
+    """"nonresidents to begin sim infected pre-symp"""
+
     location_configs: Sequence[LocationConfig] = ()
     """Configs of all locations in the simulator"""
 

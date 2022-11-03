@@ -106,9 +106,7 @@ def make_population(sim_config: PandemicSimConfig) -> List[Person]:
 
     travel_schedules = []
     for _ in range(len(adult_ages_nonresidents) + len(retiree_age_nonresidents)):
-        travel_schedules.append(TravelSchedule(np.random.choice(np.arange(sim_config.days_to_run))))
-
-    nonresident_infect_states = []
+        travel_schedules.append(TravelSchedule(np.random.choice(np.arange(sim_config.days_to_run / 4))))
 
     for age in adult_ages_nonresidents:
         home = numpy_rng.choice(hotels)

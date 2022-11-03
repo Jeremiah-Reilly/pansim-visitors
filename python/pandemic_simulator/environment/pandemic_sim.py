@@ -17,6 +17,7 @@ from .interfaces import ContactRate, ContactTracer, PandemicRegulation, Pandemic
     PandemicTestResult, \
     DEFAULT, GlobalTestingState, InfectionModel, InfectionSummary, Location, LocationID, Person, PersonID, Registry, \
     SimTime, SimTimeInterval, sorted_infection_summary, globals, PersonRoutineAssignment
+from .person import BasePerson
 from .location import Hospital
 from .make_population import make_population
 from .pandemic_testing_strategies import RandomPandemicTesting
@@ -67,6 +68,8 @@ class PandemicSim:
     _bob_nonresident: PersonID
     _bob_resident: PersonID
 
+    _seed_nonres_infect: bool
+
     def __init__(self,
                  locations: Sequence[Location],
                  persons: List[Person],
@@ -77,7 +80,8 @@ class PandemicSim:
                  new_time_slot_interval: SimTimeInterval = SimTimeInterval(day=1),
                  infection_update_interval: SimTimeInterval = SimTimeInterval(day=1),
                  person_routine_assignment: Optional[PersonRoutineAssignment] = None,
-                 infection_threshold: int = 0):
+                 infection_threshold: int = 0,
+                 seed_nonres_infect = False):
         """
         :param locations: A sequence of Location instances.
         :param persons: A sequence of Person instances.
@@ -127,6 +131,7 @@ class PandemicSim:
             if not person.is_nonresident:
                 residents.append(person)
         self._bob_resident = self._numpy_rng.choice(residents).id
+        self._seed_nonres_infect = seed_nonres_infect
 
         self._state = PandemicSimState(
             id_to_person_state={person.id: person.state for person in persons},
@@ -195,7 +200,8 @@ class PandemicSim:
                            pandemic_testing=pandemic_testing,
                            contact_tracer=contact_tracer,
                            infection_threshold=sim_opts.infection_threshold,
-                           person_routine_assignment=sim_config.person_routine_assignment)
+                           person_routine_assignment=sim_config.person_routine_assignment,
+                           seed_nonres_infect=sim_config.nonresident_infection_seed)
 
     @property
     def registry(self) -> Registry:
@@ -360,11 +366,12 @@ class PandemicSim:
         if self._infection_update_interval.trigger_at_interval(self._state.sim_time):
             global_infection_summary = {s: 0 for s in sorted_infection_summary}
             for person in self._id_to_person.values():
+                infect = cast(BasePerson, person).is_nonresident and self._seed_nonres_infect #aaaaa#
                 # infection model step
                 person.state.infection_state = self._infection_model.step(person.state.infection_state,
                                                                           person.id.age,
                                                                           person.state.risk,
-                                                                          1 - person.state.not_infection_probability)
+                                                                          1 - person.state.not_infection_probability, infect)
 
                 if person.state.infection_state.exposed_rnb != -1.:
                     for vals in person.state.not_infection_probability_history:
@@ -388,6 +395,7 @@ class PandemicSim:
             self._state.global_infection_summary = global_infection_summary
         self._state.infection_above_threshold = (self._state.global_testing_state.summary[InfectionSummary.INFECTED]
                                                  >= self._infection_threshold)
+        
         self._state.resident_bob_infection_status = (infection_summary_to_int_for_graph(self._id_to_person[self._bob_resident].state.infection_state.summary))
         if self._id_to_person.get(self._bob_nonresident) != None:
             summary = self._id_to_person[self._bob_nonresident].state.infection_state.summary
