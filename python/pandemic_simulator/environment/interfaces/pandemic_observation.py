@@ -22,7 +22,10 @@ class PandemicObservation:
     stage: np.ndarray
     infection_above_threshold: np.ndarray
     time_day: np.ndarray
+    bob_summary: np.ndarray
+
     unlocked_non_essential_business_locations: Optional[np.ndarray] = None
+
 
     @classmethod
     def create_empty(cls: Type['PandemicObservation'],
@@ -41,8 +44,10 @@ class PandemicObservation:
                                    stage=np.zeros((history_size, 1, 1)),
                                    infection_above_threshold=np.zeros((history_size, 1, 1)),
                                    time_day=np.zeros((history_size, 1, 1)),
+                                   bob_summary=np.zeros((history_size, 2, 1)),
                                    unlocked_non_essential_business_locations=np.zeros((history_size, 1,
                                                                                        num_non_essential_business))
+                                                    
                                    if num_non_essential_business is not None else None)
 
     def update_obs_with_sim_state(self, sim_state: PandemicSimState,
@@ -74,6 +79,9 @@ class PandemicObservation:
         self.infection_above_threshold[hist_index, 0] = int(sim_state.infection_above_threshold)
 
         self.time_day[hist_index, 0] = int(sim_state.sim_time.day)
+
+        self.bob_summary[hist_index, 0] = sim_state.nonresident_bob_infection_status
+        self.bob_summary[hist_index, 1] = sim_state.resident_bob_infection_status
 
     @property
     def infection_summary_labels(self) -> Sequence[str]:

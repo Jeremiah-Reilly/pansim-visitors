@@ -44,8 +44,7 @@ class BaseMatplotLibViz(PandemicViz):
     _gis: List[np.ndarray]
     _gts: List[np.ndarray]
     _stages: List[np.ndarray]
-    _bob_res: List[np.ndarray]
-    _bob_nonres: List[np.ndarray]
+    _bob_summary: List[np.ndarray]
     _rewards: List[float]
 
     _gis_legend: List[str]
@@ -66,8 +65,7 @@ class BaseMatplotLibViz(PandemicViz):
         self._gis = []
         self._gts = []
         self._stages = []
-        self._bob_res = []
-        self._bob_nonres = []
+        self._bob_summary = []
 
         self._gis_legend = []
 
@@ -85,14 +83,11 @@ class BaseMatplotLibViz(PandemicViz):
         self._gis.append(obs.global_infection_summary)
         self._gts.append(obs.global_testing_summary)
         self._stages.append(obs.stage)
+        self._bob_summary.append(obs.bob_summary)
 
     def record_state(self, state: PandemicSimState) -> None:
         obs = PandemicObservation.create_empty()
         obs.update_obs_with_sim_state(state)
-        self._bob_nonres.append(state.resident_bob_infection_summary)
-        self._bob_res.append(state.nonresident_bob_infection_summary)
-        print(self._bob_nonres)
-        print(self._bob_res)
         self.record_obs(obs=obs)
 
     def record(self, data: Any) -> None:
@@ -148,12 +143,15 @@ class BaseMatplotLibViz(PandemicViz):
 
     def plot_bob(self, ax: Optional[Axes] = None, **kwargs: Any) -> None:
         ax = ax or plt.gca()
-        print(self._bob_nonres)
-        bob_nonres = np.concatenate(self._bob_nonres).squeeze()
-        bob_res = np.concatenate(self._bob_res).squeeze()
-        ax.plot(bob_nonres)
-        ax.plot(bob_res)
-        ax.set_ylim(-0.1, kwargs.get('bob_stage', np.max(self._bob_nonres)) + 1)
+        bob_sum = np.concatenate(self._bob_summary).squeeze()
+        custom_yticks = ['Gone', 'None', 'Infected', 'Critical', 'Recovered', 'Dead']
+        y = range(-1, 5)
+        print(len(y), len(custom_yticks))
+        ax.set_yticks(y)
+        ax.set_yticklabels(custom_yticks, rotation='horizontal', fontsize=10)
+        ax.plot(bob_sum[...,0])
+        ax.plot(bob_sum[...,1])
+        ax.set_ylim(-0.1, kwargs.get('bob_stage', np.amax(bob_sum)) + 1)
         ax.set_title('Bob')
         ax.set_xlabel('time (days)')
         ax.yaxis.set_major_locator(MaxNLocator(integer=True))

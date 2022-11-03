@@ -30,10 +30,10 @@ class PandemicSimState:
     global_infection_summary: Dict[InfectionSummary, int]
     """Specifies the number of people with each infection summary"""
 
-    nonresident_bob_infection_summary: int
-    """Tracks nonresident bob's infection summary"""
+    nonresident_bob_infection_status: int
+    """Tracks nonresident bob's infection status"""
 
-    resident_bob_infection_summary: int
+    resident_bob_infection_status: int
     """Tracks resident bob's infection summary"""
 
     global_testing_state: GlobalTestingState

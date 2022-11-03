@@ -133,8 +133,8 @@ class PandemicSim:
             id_to_location_state={location.id: location.state for location in locations},
             location_type_infection_summary={type(location): 0 for location in locations},
             global_infection_summary={s: 0 for s in sorted_infection_summary},
-            nonresident_bob_infection_summary=0,
-            resident_bob_infection_summary=0,
+            nonresident_bob_infection_status=0,
+            resident_bob_infection_status=0,
             global_testing_state=GlobalTestingState(summary={s: len(persons) if s == InfectionSummary.NONE else 0
                                                              for s in sorted_infection_summary},
                                                     num_tests=0),
@@ -388,12 +388,12 @@ class PandemicSim:
             self._state.global_infection_summary = global_infection_summary
         self._state.infection_above_threshold = (self._state.global_testing_state.summary[InfectionSummary.INFECTED]
                                                  >= self._infection_threshold)
-        self._state.resident_bob_infection_summary = (infection_summary_to_int_for_graph(self._id_to_person[self._bob_resident].state.infection_state.summary))
+        self._state.resident_bob_infection_status = (infection_summary_to_int_for_graph(self._id_to_person[self._bob_resident].state.infection_state.summary))
         if self._id_to_person.get(self._bob_nonresident) != None:
             summary = self._id_to_person[self._bob_nonresident].state.infection_state.summary
-            self._state.nonresident_bob_infection_summary  = infection_summary_to_int_for_graph(summary)
+            self._state.nonresident_bob_infection_status  = infection_summary_to_int_for_graph(summary)
         else:
-            self._state.nonresident_bob_infection_summary = -1
+            self._state.nonresident_bob_infection_status = -1
 
 
         self._state.global_location_summary = self._registry.global_location_summary
@@ -479,8 +479,8 @@ class PandemicSim:
             location_type_infection_summary={type(location): 0 for location in self._id_to_location.values()},
 
             global_infection_summary={s: 0 for s in sorted_infection_summary},
-            resident_bob_infection_summary=0,
-            nonresident_bob_infection_summary=0,
+            resident_bob_infection_status=0,
+            nonresident_bob_infection_status=0,
             global_location_summary=self._registry.global_location_summary,
             global_testing_state=GlobalTestingState(summary={s: num_persons if s == InfectionSummary.NONE else 0
                                                              for s in sorted_infection_summary},
