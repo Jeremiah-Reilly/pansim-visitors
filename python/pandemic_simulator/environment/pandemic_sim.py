@@ -319,7 +319,7 @@ class PandemicSim:
             now_time = self._state.sim_time.in_hours()
             # remove person
             if schedule._active and (now_time > schedule.end_day * 24 or now_time < schedule.start_day * 24) and \
-                (person.state.infection_state == None or person.state.infection_state.summary != InfectionSummary.DEAD):
+                (person.state.infection_state == None or person.state.infection_state.summary != InfectionSummary.DEAD or person.state.infection_state.summary != InfectionSummary.CRITICAL):
                 self._persons.remove(person)
                 print("removed ", person.id.name, " at ", str(now_time))
                 current_location = self._registry.location_register[person.state.current_location]
